@@ -4,32 +4,46 @@ import {
   Send,
   Loader2,
   Menu,
-  Home,
-  Sparkles,
   MapPin,
   Calendar,
   DollarSign,
- 
+  Sparkles,
+  User2Icon,
 } from 'lucide-react';
 import { RiChatAiLine } from 'react-icons/ri';
 import { TiArrowBackOutline } from 'react-icons/ti';
 import { useNavigate } from 'react-router-dom';
 import { MdOutlineTravelExplore } from 'react-icons/md';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 const ChatPage = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: "Hello! 👋 I'm your AI travel assistant. Where would you like to explore today?",
-      timestamp: new Date(),
+      text: 'Hello! 👋 Welcome to TripTalk! May I know your name?',
     },
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [sessionId, setSessionId] = useState('');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Initialize or retrieve session ID
+  useEffect(() => {
+    let storedSessionId = localStorage.getItem('travel_chat_session_id');
+
+    if (!storedSessionId) {
+      // Generate new session ID if not exists
+      storedSessionId = uuidv4();
+      localStorage.setItem('travel_chat_session_id', storedSessionId);
+    }
+
+    setSessionId(storedSessionId);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,64 +55,41 @@ const ChatPage = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading || !sessionId) return;
 
     const userMessage = {
       type: 'user',
       text: inputMessage,
-      timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
+    try {
+      // Call the Flask API
+      const response = await axios.post(`http://127.0.0.1:5001/chat`, {
+        user_input: currentInput,
+        session_id: sessionId,
+      });
+      console.log('API Response:', response.data);
       const botResponse = {
         type: 'bot',
-        text: generateResponse(inputMessage),
-        timestamp: new Date(),
+        text: response.data.ai_reply,
       };
       setMessages((prev) => [...prev, botResponse]);
+    } catch (error) {
+      console.error('Error calling API:', error);
+
+      const errorResponse = {
+        type: 'bot',
+        text: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+      };
+
+      setMessages((prev) => [...prev, errorResponse]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
-  };
-
-  const generateResponse = (userInput) => {
-    const input = userInput.toLowerCase();
-
-    if (input.includes('rajasthan') || input.includes('jaipur')) {
-      return 'Rajasthan is a magnificent choice! 🏰 I can help you explore the Pink City Jaipur, the Blue City Jodhpur, romantic Udaipur, and the golden desert of Jaisalmer. How many days are you planning to stay?';
-    } else if (input.includes('kerala')) {
-      return "Kerala - God's Own Country! 🌴 Perfect for backwater cruises, tea plantations in Munnar, and beautiful beaches in Kovalam. What's your preferred travel style - luxury, mid-range, or budget?";
-    } else if (input.includes('goa')) {
-      return 'Goa is amazing! 🏖️ Beach paradise with Portuguese heritage, water sports, nightlife, and delicious seafood. When are you planning to visit? Peak season or monsoons?';
-    } else if (input.includes('himalaya') || input.includes('mountain')) {
-      return 'The Himalayas offer breathtaking experiences! 🏔️ From Shimla and Manali to Leh-Ladakh and Rishikesh. Are you interested in trekking, spiritual journeys, or scenic relaxation?';
-    } else if (
-      input.includes('budget') ||
-      input.includes('cost') ||
-      input.includes('₹') ||
-      input.includes('price')
-    ) {
-      return "I'll help you plan within your budget! 💰 Could you share your approximate budget range? This will help me suggest accommodations, activities, and dining options that match your preferences.";
-    } else if (
-      input.includes('day') ||
-      input.includes('duration') ||
-      input.includes('week')
-    ) {
-      return "Great! Based on your duration, I'll create a day-by-day itinerary. 📅 What are your main interests? Culture & heritage, adventure activities, relaxation, food experiences, or a mix of everything?";
-    } else if (
-      input.includes('hotel') ||
-      input.includes('stay') ||
-      input.includes('accommodation')
-    ) {
-      return 'I can suggest the perfect accommodations! 🏨 Would you prefer heritage hotels, luxury resorts, boutique stays, or budget-friendly options? Also, which areas would you like to be close to?';
-    } else if (input.includes('food') || input.includes('restaurant')) {
-      return 'Indian cuisine is incredible! 🍛 Each region has unique flavors. I can recommend authentic local restaurants, street food tours, and traditional dining experiences. Any dietary preferences or restrictions?';
-    } else {
-      return "That sounds interesting! ✨ To help you better, could you tell me more about your destination preferences, travel dates, budget range, and what kind of experiences you're looking for?";
     }
   };
 
@@ -115,6 +106,26 @@ const ChatPage = () => {
   const handleSuggestionClick = (suggestion) => {
     setInputMessage(suggestion);
     inputRef.current?.focus();
+  };
+
+  const handleNewChat = () => {
+    // Only set up a new session ID if one does not exist
+    let storedSessionId = localStorage.getItem('travel_chat_session_id');
+    if (!storedSessionId) {
+      storedSessionId = uuidv4();
+      localStorage.setItem('travel_chat_session_id', storedSessionId);
+      setSessionId(storedSessionId);
+    } else {
+      setSessionId(storedSessionId);
+    }
+
+    // Reset messages to show welcome and ask name
+    setMessages([
+      {
+        type: 'bot',
+        text: 'Hello! 👋 Welcome to TripTalk! May I know your name?',
+      },
+    ]);
   };
 
   return (
@@ -149,7 +160,7 @@ const ChatPage = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => window.location.reload()}
+                onClick={handleNewChat}
                 className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition-colors shadow-md"
               >
                 <RiChatAiLine className="w-5 h-5" />
@@ -232,6 +243,7 @@ const ChatPage = () => {
         </div>
       </div>
 
+      {/* Input Section - Fixed at Bottom */}
       <div className="">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <motion.div
@@ -350,7 +362,7 @@ const MessageBubble = ({ message, index }) => {
           transition={{ delay: index * 0.1 + 0.2, type: 'spring' }}
           className="flex-shrink-0 w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center shadow-lg"
         >
-          <span className="text-white font-bold text-sm">U</span>
+          <span className="text-white font-bold text-sm"><User2Icon /></span>
         </motion.div>
       )}
     </motion.div>
