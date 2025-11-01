@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plane,
-  MessageCircle,
   Compass,
   Globe,
   MapPin,
@@ -135,24 +133,15 @@ const WelcomePage = () => {
               </motion.div>
             </div>
 
-            {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-8">
-              <NavLink onClick={() => scrollToSection('about')}>About</NavLink>
-              <NavLink onClick={() => scrollToSection('features')}>
-                Features
-              </NavLink>
+              <NavLink onClick={() => scrollToSection('demo')}>Demo</NavLink>
               <NavLink onClick={() => scrollToSection('how-it-works')}>
                 How It Works
               </NavLink>
-              <NavLink onClick={() => scrollToSection('demo')}>Demo</NavLink>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/chat')}
-                className="bg-blue-600 text-white px-6 py-2 rounded-full font-medium"
-              >
-                Start Planning
-              </motion.button>
+              <NavLink onClick={() => scrollToSection('features')}>
+                Features
+              </NavLink>
+              <NavLink onClick={() => scrollToSection('about')}>About</NavLink>
             </div>
 
             {/* Mobile Menu Button */}
@@ -171,7 +160,6 @@ const WelcomePage = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -238,7 +226,7 @@ const WelcomePage = () => {
               transition={{ delay: 0.3 }}
               className="text-6xl font-bold text-gray-800 mb-6"
             >
-              Plan Your Dream Trip with AI 🌎
+              Plan Your Dream Trip with us 🌎
             </motion.h1>
 
             <motion.p
